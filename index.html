@@ -156,6 +156,10 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
 
 .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
   font-size:13px;color:var(--muted);line-height:1.7}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.actions .btn{margin-top:0}
+.btn.pri{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.btn.pri:hover{background:var(--deep);border-color:var(--deep)}
 .btn{display:inline-block;font-family:var(--disp);font-size:14px;letter-spacing:.12em;
   text-transform:uppercase;border:1px solid var(--blue);color:var(--blue);
   border-radius:8px;padding:11px 16px;margin-top:16px;background:var(--white)}
@@ -496,7 +500,14 @@ function renderPerson(name) {
     }
     h += turnoCard(shown[i], name, dup[s.dia_num + "|" + s.min]);
   }
-  h += '<button class="btn" data-act="ics" data-name="' + esc(name) + '">Descargar al calendario</button>';
+  h += '<div class="actions">';
+  h += '<button class="btn pri" data-act="wa" data-name="' + esc(name) +
+    '">Enviar por WhatsApp</button>';
+  h += '<button class="btn" data-act="mail" data-name="' + esc(name) +
+    '">Enviar por correo</button>';
+  h += '<button class="btn" data-act="ics" data-name="' + esc(name) +
+    '">Descargar al calendario</button>';
+  h += "</div>";
   return h;
 }
 
@@ -555,6 +566,88 @@ function renderSession(id) {
     h += "</div>";
   }
   return h + "</div>";
+}
+
+function baseUrl() {
+  try {
+    if (location.protocol.indexOf("http") !== 0) { return ""; }
+    return location.origin + location.pathname.replace(/index\.html$/, "");
+  } catch (e) { return ""; }
+}
+
+function rolDe(x) {
+  var r = [];
+  if (x.courts.length) {
+    var c = [], i;
+    for (i = 0; i < x.courts.length; i++) { c.push(x.courts[i] + 1); }
+    r.push("Cancha " + c.join(" y "));
+  }
+  if (x.ev) { r.push("Evaluador"); }
+  return r.join(" y ");
+}
+
+function itinerario(name, compacto) {
+  var list = turnosDe(name), i, out = [];
+  out.push("Try-outs CVVB 2026-2027 - Cancha Collazo");
+  out.push("Turnos de " + name);
+  out.push("");
+  var lastDay = -1, buf = [], cab = "";
+  for (i = 0; i < list.length; i++) {
+    var s = list[i].s, rol = rolDe(list[i]);
+    if (s.dia_num !== lastDay) {
+      if (compacto && buf.length) { out.push(cab + " " + buf.join(" / ")); buf = []; }
+      lastDay = s.dia_num;
+      cab = s.dow.toUpperCase() + " " + s.dia_num + ":";
+      if (!compacto) { out.push(s.dow.toUpperCase() + " " + s.dia_num + " DE AGOSTO"); }
+    }
+    if (compacto) {
+      buf.push(s.hora + " " + s.cat + " " + rol.replace("Cancha ", "C"));
+    } else {
+      out.push(s.hora + " - " + s.cat + " - " + rol);
+      if (i + 1 >= list.length || list[i + 1].s.dia_num !== s.dia_num) { out.push(""); }
+    }
+  }
+  if (compacto && buf.length) { out.push(cab + " " + buf.join(" / ")); }
+  var base = baseUrl();
+  if (base) {
+    out.push("");
+    out.push("Ver completo: " + base + "#p/" + slug(name));
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+function textoDe(name) {
+  var t = itinerario(name, false);
+  if (t.length > 780) { t = itinerario(name, true); }
+  return t;
+}
+
+function openUrl(url) {
+  try {
+    var a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (e) {
+    try { location.href = url; } catch (e2) { return; }
+  }
+}
+
+function enviarWa(name) {
+  try {
+    openUrl("https://wa.me/?text=" + encodeURIComponent(textoDe(name)));
+  } catch (e) { alert("No se pudo abrir WhatsApp."); }
+}
+
+function enviarMail(name) {
+  try {
+    var asunto = "Turnos try-outs CVVB - " + name;
+    openUrl("mailto:?subject=" + encodeURIComponent(asunto) +
+      "&body=" + encodeURIComponent(textoDe(name)));
+  } catch (e) { alert("No se pudo abrir el correo."); }
 }
 
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
@@ -720,6 +813,12 @@ document.addEventListener("click", function (e) {
       state.filter = t.getAttribute("data-f");
     } else if (act === "ics") {
       download(t.getAttribute("data-name"));
+      return;
+    } else if (act === "wa") {
+      enviarWa(t.getAttribute("data-name"));
+      return;
+    } else if (act === "mail") {
+      enviarMail(t.getAttribute("data-name"));
       return;
     }
     writeHash();
