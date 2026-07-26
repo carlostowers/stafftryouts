@@ -1,0 +1,17 @@
+{
+  "name": "Turnos Try-Outs CVVB 2026-2027",
+  "short_name": "Turnos CVVB",
+  "description": "Turnos de staff de los try-outs de Club Voleibol Vaqueros, agosto 2026.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7FC",
+  "theme_color": "#023B9F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
