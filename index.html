@@ -705,6 +705,16 @@ function writeHash() {
     h = "d/" + state.day;
   }
   try {
+    if (!h) {
+      if (location.hash) {
+        if (window.history && history.replaceState) {
+          history.replaceState(null, "", location.pathname + location.search);
+        } else {
+          location.hash = "";
+        }
+      }
+      return;
+    }
     if (location.hash.replace(/^#/, "") !== h) { location.hash = h; }
   } catch (e) { return; }
 }
@@ -839,5 +849,6 @@ try {
 readHash();
 render();
 </script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
