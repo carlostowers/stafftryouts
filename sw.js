@@ -1,6 +1,6 @@
-var CACHE = "cvvb-turnos-v4";
+var CACHE = "cvvb-turnos-v5";
 var CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png",
-  "icon-maskable-512.png", "apple-touch-icon.png", "logo.png"];
+  "icon-maskable-512.png", "apple-touch-icon.png", "logo.png", "og-image.png"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
