@@ -1,4 +1,4 @@
-var CACHE = "cvvb-turnos-v12";
+var CACHE = "cvvb-turnos-v13";
 var CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png",
   "icon-maskable-512.png", "apple-touch-icon.png", "logo.png", "og-image.png"];
 
