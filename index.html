@@ -36,7 +36,7 @@
 :root{
   --white:#FFFFFF; --paper:#F4F7FC; --blue:#023B9F; --deep:#01245F;
   --yellow:#FFCF27; --text:#0B1533; --muted:#4A5678; --line:#D3DCEE;
-  --alert:#A32219; --alert-bg:#FCEDEB; --amber:#7E5200; --amber-bg:#FFF6E0;
+  --alert:#A32219; --alert-bg:#FCEDEB; --coral:#FF4A3D; --cielo:#86ABC6; --on-coral:#2B0A05; --amber:#7E5200; --amber-bg:#FFF6E0;
   --disp:'Barlow Condensed',system-ui,-apple-system,sans-serif;
   --body:'Barlow',system-ui,-apple-system,sans-serif;
 }
@@ -125,6 +125,10 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
   color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:3px 7px;
   vertical-align:4px;margin-right:5px}
 .tag.warn{color:var(--alert);border-color:var(--alert);background:var(--alert-bg)}
+.shirt{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-radius:5px;padding:3px 8px;vertical-align:4px;margin-right:5px;font-weight:600}
+.shirt.roja{background:var(--coral);color:var(--on-coral);border:1px solid var(--coral)}
+.shirt.azul{background:var(--cielo);color:var(--deep);border:1px solid var(--cielo)}
+p.shirt{margin-top:10px;vertical-align:0}
 
 .courts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:12px}
 .court{background:var(--paper);border:1px solid var(--line);border-radius:6px;
@@ -512,6 +516,7 @@ function turnoCard(x, me, isDup) {
   h += '<span class="cat">' + esc(s.cat) + "</span>";
   h += '<span class="tag">' + esc(s.dow) + " " + s.dia_num + "</span>";
   if (s.desarrollo) { h += '<span class="tag">Desarrollo</span>'; }
+  h += camisaChip(s.dia_num, "span");
   if (isDup) { h += '<span class="tag warn">Choque de horario</span>'; }
   h += "</span>";
   if (s.divs && s.divs.length) { h += '<span class="divs">' + esc(s.divs.join("  |  ")) + "</span>"; }
@@ -603,6 +608,7 @@ function renderSession(id) {
   if (s.divs && s.divs.length) {
     h += '<p class="divs">Divisiones: ' + esc(s.divs.join("  |  ")) + "</p>";
   }
+  h += camisaChip(s.dia_num, "p");
   if (s.fix) { h += '<p class="note">' + esc(s.fix) + "</p>"; }
   if (s.alerta) { h += '<p class="note soft">' + esc(s.alerta) + "</p>"; }
   if (s.conflicto) {
@@ -684,8 +690,11 @@ function itinerario(name, compacto) {
     if (s.dia_num !== lastDay) {
       if (compacto && buf.length) { out.push(cab + " " + buf.join(" / ")); buf = []; }
       lastDay = s.dia_num;
-      cab = s.dow.toUpperCase() + " " + s.dia_num + ":";
-      if (!compacto) { out.push(s.dow.toUpperCase() + " " + s.dia_num + " DE AGOSTO"); }
+      cab = s.dow.toUpperCase() + " " + s.dia_num + " (camisa " + camisaDe(s.dia_num) + "):";
+      if (!compacto) {
+        out.push(s.dow.toUpperCase() + " " + s.dia_num +
+          " DE AGOSTO - camisa " + camisaDe(s.dia_num));
+      }
     }
     if (compacto) {
       buf.push(s.hora + " " + s.cat + " " + rol.replace("Cancha ", "C"));
@@ -737,6 +746,12 @@ function enviarMail(name) {
   } catch (e) { alert("No se pudo abrir el correo."); }
 }
 
+function camisaDe(dia) { return (dia % 2) ? "roja" : "azul"; }
+function camisaChip(dia, tag) {
+  var c = camisaDe(dia);
+  return "<" + tag + ' class="shirt ' + c + '">Camisa</' + tag + ">";
+}
+
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
 function icsFor(name) {
@@ -757,7 +772,7 @@ function icsFor(name) {
     out.push("DTEND:" + d + "T" + pad(eh) + pad(em) + "00");
     out.push("SUMMARY:Try-out " + s.cat + " - " + role);
     out.push("LOCATION:" + (s.sede || "Collazo"));
-    out.push("DESCRIPTION:Try-outs CVVB 2026-2027. Categoría " + s.cat + ". " + role + "." + dv);
+    out.push("DESCRIPTION:Try-outs CVVB 2026-2027. Camisa " + camisaDe(s.dia_num) + ". Categoría " + s.cat + ". " + role + "." + dv);
     out.push("END:VEVENT");
   }
   out.push("END:VCALENDAR");
