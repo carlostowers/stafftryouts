@@ -93,9 +93,10 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
   letter-spacing:.12em;color:var(--muted)}
 .chip b{display:block;font-family:var(--disp);font-weight:700;font-size:20px;
   line-height:1.15;color:var(--deep)}
-.chip i{display:block;height:4px;border-radius:2px;margin-top:5px}
-.chip i.roja{background:var(--coral)}
-.chip i.azul{background:var(--cielo)}
+.chip .tee{display:block;margin:6px auto 0;width:17px;height:17px;stroke:var(--line);stroke-width:1;stroke-linejoin:round}
+.chip .tee.roja{fill:var(--coral)}
+.chip .tee.azul{fill:var(--cielo)}
+.chip[aria-pressed="true"] .tee{stroke:var(--white)}
 .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
 .chip[aria-pressed="true"] u,.chip[aria-pressed="true"] b{color:var(--white)}
 
@@ -485,7 +486,7 @@ function renderDias() {
     h += '<button class="chip" data-act="day" data-d="' + d.dia + '" aria-pressed="' +
       (state.day === d.dia ? "true" : "false") + '">' +
       "<u>" + esc(d.dow.slice(0, 3)) + "</u><b>" + d.dia + "</b>" +
-      '<i class="' + camisaDe(d.dia) + '"></i></button>';
+      camisaIcono(d.dia) + "</button>";
   }
   h += "</div>";
   var ses = sesionesDe(state.day);
@@ -752,6 +753,11 @@ function enviarMail(name) {
 }
 
 function camisaDe(dia) { return (dia % 2) ? "roja" : "azul"; }
+function camisaIcono(dia) {
+  return '<svg class="tee ' + camisaDe(dia) + '" viewBox="0 0 24 24" ' +
+    'aria-hidden="true" focusable="false"><path d="M8.4 3 3.2 5.6 1.6 9.8l3.4 1.3 ' +
+    '1-1.7V21h12V9.4l1 1.7 3.4-1.3-1.6-4.2L15.6 3a3.7 3.7 0 0 1-7.2 0Z"/></svg>';
+}
 function camisaChip(dia, tag) {
   var c = camisaDe(dia);
   return "<" + tag + ' class="shirt ' + c + '">Camisa</' + tag + ">";
