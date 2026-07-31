@@ -93,6 +93,9 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
   letter-spacing:.12em;color:var(--muted)}
 .chip b{display:block;font-family:var(--disp);font-weight:700;font-size:20px;
   line-height:1.15;color:var(--deep)}
+.chip i{display:block;height:4px;border-radius:2px;margin-top:5px}
+.chip i.roja{background:var(--coral)}
+.chip i.azul{background:var(--cielo)}
 .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
 .chip[aria-pressed="true"] u,.chip[aria-pressed="true"] b{color:var(--white)}
 
@@ -129,6 +132,7 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
 .shirt.roja{background:var(--coral);color:var(--on-coral);border:1px solid var(--coral)}
 .shirt.azul{background:var(--cielo);color:var(--deep);border:1px solid var(--cielo)}
 p.shirt{margin-top:10px;vertical-align:0}
+.day .shirt{vertical-align:0;margin-right:0}
 
 .courts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:12px}
 .court{background:var(--paper);border:1px solid var(--line);border-radius:6px;
@@ -480,13 +484,14 @@ function renderDias() {
     var d = DAYS[i];
     h += '<button class="chip" data-act="day" data-d="' + d.dia + '" aria-pressed="' +
       (state.day === d.dia ? "true" : "false") + '">' +
-      "<u>" + esc(d.dow.slice(0, 3)) + "</u><b>" + d.dia + "</b></button>";
+      "<u>" + esc(d.dow.slice(0, 3)) + "</u><b>" + d.dia + "</b>" +
+      '<i class="' + camisaDe(d.dia) + '"></i></button>';
   }
   h += "</div>";
   var ses = sesionesDe(state.day);
   if (!ses.length) { return h + '<p class="empty">Ese día no tiene sesiones.</p>'; }
   h += '<p class="day">' + esc(ses[0].dow) + " <em>" + state.day +
-    " de agosto</em><span></span></p>";
+    " de agosto</em>" + camisaChip(state.day, "span") + "<span></span></p>";
   for (i = 0; i < ses.length; i++) {
     var s = ses[i], tot = s.canchas[0].length + s.canchas[1].length +
       s.canchas[2].length + s.canchas[3].length;
