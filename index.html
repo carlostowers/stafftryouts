@@ -84,6 +84,13 @@ h1{font-family:var(--disp);font-weight:700;font-size:38px;line-height:1.02;
 .nrow{display:block;background:var(--white);padding:14px 15px;width:100%;font-size:16px;font-weight:500}
 .nrow:hover,.nrow:focus-visible{background:var(--paper)}
 .empty{padding:26px 4px;color:var(--muted);font-size:15px}
+.verpas{font-family:var(--disp);font-size:14px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--blue);background:var(--paper);border:1px solid var(--line);border-radius:9px;
+  padding:10px 14px;margin:14px 0 4px;width:100%;display:block}
+.chip.pas{opacity:.42}
+.chip.pas b{text-decoration:line-through}
+.chip.hoy u{color:var(--blue);font-weight:700}
+.chip.hoy[aria-pressed="true"] u{color:var(--white)}
 
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
@@ -240,7 +247,8 @@ var TORNEOS = {
 
 var COURTS = ["Cancha 1", "Cancha 2", "Cancha 3", "Cancha 4"];
 var DUR = 90;
-var state = { mode: "personas", q: "", name: "", day: 0, open: -1, filter: "todos", from: "personas" };
+var state = { mode: "personas", q: "", name: "", day: 0, open: -1, filter: "todos",
+  from: "personas", verPasados: false };
 
 function esc(t) {
   return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -481,20 +489,37 @@ function renderPersonas() {
 
 function renderDias() {
   var h = nowCard() + seg(), i;
-  if (!state.day) { state.day = DAYS[0].dia; }
+  if (!state.day) { state.day = diaInicial(); }
   h += '<div class="chips">';
   for (i = 0; i < DAYS.length; i++) {
     var d = DAYS[i];
-    h += '<button class="chip" data-act="day" data-d="' + d.dia + '" aria-pressed="' +
+    var ds = sesionesDe(d.dia), k, idas = true;
+    for (k = 0; k < ds.length; k++) { if (!pasoYa(ds[k])) { idas = false; } }
+    var esHoy = d.dia === hoyDia();
+    h += '<button class="chip' + (idas ? " pas" : "") + (esHoy ? " hoy" : "") +
+      '" data-act="day" data-d="' + d.dia + '" aria-pressed="' +
       (state.day === d.dia ? "true" : "false") + '">' +
-      "<u>" + esc(d.dow.slice(0, 3)) + "</u><b>" + d.dia + "</b>" +
+      "<u>" + (esHoy ? "HOY" : esc(d.dow.slice(0, 3))) + "</u><b>" + d.dia + "</b>" +
       camisaIcono(d.dia) + "</button>";
   }
   h += "</div>";
-  var ses = sesionesDe(state.day);
-  if (!ses.length) { return h + '<p class="empty">Ese día no tiene sesiones.</p>'; }
-  h += '<p class="day">' + esc(ses[0].dow) + " <em>" + state.day +
+  var todas = sesionesDe(state.day);
+  if (!todas.length) { return h + '<p class="empty">Ese día no tiene sesiones.</p>'; }
+  var diaEntero = true, ses = [], oc = 0;
+  for (i = 0; i < todas.length; i++) { if (!pasoYa(todas[i])) { diaEntero = false; } }
+  for (i = 0; i < todas.length; i++) {
+    if (!diaEntero && pasoYa(todas[i])) {
+      oc++;
+      if (!state.verPasados) { continue; }
+    }
+    ses.push(todas[i]);
+  }
+  h += '<p class="day">' + esc(todas[0].dow) + " <em>" + state.day +
     " de agosto</em>" + camisaIcono(state.day) + "<span></span></p>";
+  if (oc) { h += botonPasados(); }
+  if (!ses.length) {
+    return h + '<p class="empty">No quedan sesiones pendientes ese día.</p>';
+  }
   for (i = 0; i < ses.length; i++) {
     var s = ses[i], tot = s.canchas[0].length + s.canchas[1].length +
       s.canchas[2].length + s.canchas[3].length;
@@ -575,13 +600,23 @@ function renderPerson(name) {
   }
   h += '<div class="tabs" role="tablist">' + tab("todos", "Todos") +
     tab("ayudante", "En cancha") + tab("evaluador", "Evaluando") + "</div>";
-  var shown = [];
+  var shown = [], ocultos = 0;
   for (i = 0; i < list.length; i++) {
     if (state.filter === "ayudante" && !list[i].courts.length) { continue; }
     if (state.filter === "evaluador" && !list[i].ev) { continue; }
+    if (pasoYa(list[i].s)) {
+      ocultos++;
+      if (!state.verPasados) { continue; }
+    }
     shown.push(list[i]);
   }
-  if (!shown.length) { return h + '<p class="empty">No hay turnos en esta vista.</p>'; }
+  if (!shown.length) {
+    h += '<p class="empty">' + (ocultos ?
+      "No quedan turnos pendientes en esta vista." :
+      "No hay turnos en esta vista.") + "</p>";
+    return ocultos ? h + botonPasados() : h;
+  }
+  if (ocultos) { h += botonPasados(); }
   var lastDay = -1;
   for (i = 0; i < shown.length; i++) {
     var s = shown[i].s;
@@ -753,6 +788,34 @@ function enviarMail(name) {
   } catch (e) { alert("No se pudo abrir el correo."); }
 }
 
+function finDe(s) { return new Date(startOf(s).getTime() + DUR * 60000); }
+function pasoYa(s) { return new Date() >= finDe(s); }
+function hoyDia() {
+  var n = new Date();
+  if (n.getFullYear() === 2026 && n.getMonth() === 7) { return n.getDate(); }
+  return 0;
+}
+function diaInicial() {
+  var t = hoyDia(), i;
+  for (i = 0; i < DAYS.length; i++) { if (DAYS[i].dia === t) { return DAYS[i].dia; } }
+  for (i = 0; i < DAYS.length; i++) { if (DAYS[i].dia > t) { return DAYS[i].dia; } }
+  return DAYS[DAYS.length - 1].dia;
+}
+function botonPasados() {
+  return '<button class="verpas" data-act="verpas">' +
+    (state.verPasados ? "Ocultar los que ya pasaron" : "Mostrar los que ya pasaron") +
+    "</button>";
+}
+function centrarDia() {
+  try {
+    var row = document.querySelector(".chips");
+    if (!row || !row.querySelector) { return; }
+    var on = row.querySelector('.chip[aria-pressed="true"]');
+    if (!on) { return; }
+    row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+  } catch (e) { return; }
+}
+
 function camisaDe(dia) { return (dia % 2) ? "roja" : "azul"; }
 function camisaIcono(dia) {
   return '<svg class="tee ' + camisaDe(dia) + '" viewBox="0 0 24 24" ' +
@@ -889,6 +952,7 @@ function render() {
     } else if (state.mode === "dias") {
       sub.textContent = "Escoge un día y mira quién cubre cada cancha.";
       app.innerHTML = renderDias();
+      centrarDia();
     } else if (state.mode === "agenda") {
       sub.textContent = "Fechas oficiales del club para la temporada 2026-2027.";
       app.innerHTML = renderAgenda();
@@ -935,6 +999,8 @@ document.addEventListener("click", function (e) {
       } else {
         state.name = ""; state.filter = "todos";
       }
+    } else if (act === "verpas") {
+      state.verPasados = !state.verPasados;
     } else if (act === "filter") {
       state.filter = t.getAttribute("data-f");
     } else if (act === "ics") {
